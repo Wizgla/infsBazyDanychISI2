@@ -8,116 +8,142 @@ SELECT imie, nazwisko, year(now())-year(data_urodzenia) as wiek FROM __firma_zti
 ```
 3:
 ```mysql
-select d.nazwa, count(p.id_pracownika) as liczba_pracownikow from __firma_zti.dzial 
-inner join __firma_zti.pracownik p on p.dzial=d.id_dzialu group by d.nazwa
+#Wyświetl nazwę działu i liczbę pracowników przypisanych do każdego z nich.
+select dzial.nazwa as nazwa_dzialu, count(pracownik.id_pracownika) as ilosc_pracownikow from dzial
+inner join pracownik on id_dzialu = pracownik.dzial
+group by nazwa
 ```
 4:
 ```mysql
-select k.nazwa_kategori, count(t.id_towaru) as liczba_produktow from kategoria k 
-inner join towar t on t.kategoria=k.id_kategori group by k.nazwa_kategori
+select nazwa_kategori, group_concat(nazwa_towaru) from kategoria
+inner join towar on id_kategori = kategoria
+group by nazwa_kategori;
 ```
 5:
 ```mysql
-select k.nazwa_kategori, group_concat(t.nazwa_towaru)  from kategoria k 
-inner join towar t on t.kategoria=k.id_kategori group by k.nazwa_kategori
+#Wyświetl nazwę kategorii i w kolejnej kolumnie listę wszystkich produktów należącej do każdej z nich.
+select kategoria.nazwa_kategori, group_concat(nazwa_towaru) from kategoria
+inner join towar on id_kategori = towar.kategoria
+group by nazwa_kategori
 ```
 6:
 ```mysql
-select Round(avg(pensja), 2) from pracownik
-
+select round(avg(pracownik.pensja),2) from pracownik;
 ```
 7:
 ```mysql
-select Round(avg(pensja), 2) from pracownik where year(now()) - year(data_zatrudnienia)<=5
+select avg(pracownik.pensja) from pracownik where year(now())-year(data_zatrudnienia) > 5;
 ```
 8:
 ```mysql
-select t.nazwa_towaru from pozycja_zamowienia p 
-inner join towar t on t.id_towaru = p.towar
-group by t.nazwa_towaru  order by count(p.towar) desc limit 10
-
+select towar.nazwa_towaru from pozycja_zamowienia
+inner join towar on id_towaru = pozycja_zamowienia.towar
+group by nazwa_towaru
+order by count(towar) desc limit 10;
 ```
 9:
 ```mysql
-SELECT z.numer_zamowienia,sum(p.cena*p.ilosc) as wartosc FROM zamowienie z
-inner join pozycja_zamowienia p on p.zamowienie=z.id_zamowienia where z.data_zamowienia between '2017-01-01' and '2017-03-31' 
-group by z.numer_zamowienia
+#Wyświetl numer zamówienia, jego wartość (suma wartości wszystkich jego pozycji) zarejestrowanych w pierwszym kwartale 2017 roku.
+select zamowienie.numer_zamowienia,sum(ilosc * cena) from zamowienie
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+where data_zamowienia between '2017-01-01' and '2017-03-31'
+group by numer_zamowienia;
 ```
 10:
 ```mysql
-select p.imie, p.nazwisko, sum(pz.cena*pz.ilosc) as wartosc from pracownik p
-inner join zamowienie z on p.id_pracownika=z.pracownik_id_pracownika
-inner join pozycja_zamowienia pz  on z.id_zamowienia=pz.zamowienie
-group by id_pracownika  order by sum(cena*ilosc) desc
+#Wyświetl imie, nazwisko i sumę wartości zamówień, które dany pracownik dodał. Posortuj malejąco po sumie.
+select pracownik.imie,pracownik.nazwisko, sum(ilosc * cena) as suma from pracownik
+inner join zamowienie on id_pracownika = zamowienie.pracownik_id_pracownika
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+group by id_pracownika
+order by suma desc;
 ```
 11:
 ```mysql
-select d.nazwa,  max(p.pensja), min(p.pensja), avg(pensja) from dzial d
-inner join pracownik p on p.dzial=d.id_dzialu
-group by p.dzial
+#Wyświetl nazwę działu i minimalną, maksymalną i średnią wartość pensji w każdym dziale.
+select dzial.nazwa, min(pracownik.pensja),max(pracownik.pensja),avg(pracownik.pensja) from pracownik
+inner join dzial on id_dzialu = pracownik.dzial
+group by nazwa;
 ```
 12:
 ```mysql
-select k.pelna_nazwa, sum(pz.ilosc*pz.cena) from klient k
-inner join zamowienie z on z.klient = k.id_klienta
-inner join pozycja_zamowienia pz on pz.zamowienie=z.id_zamowienia
-group by pelna_nazwa order by sum(ilosc*cena) desc limit 10 
+#Wyświetl pełną nazwę klienta, wartość zamówienia dla 10 najwyższych wartości zamówienia.
+select klient.pelna_nazwa, sum(ilosc * cena) as suma from klient
+inner join zamowienie on id_klienta = zamowienie.klient
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+group by id_klienta
+order by suma desc limit 10;
 ```
 13:
 ```mysql
-select year(z.data_zamowienia) as rok, sum(pz.ilosc*pz.cena) as przychod from zamowienie z
-inner join pozycja_zamowienia pz on z.id_zamowienia=pz.zamowienie
-inner join pracownik p on p.id_pracownika=z.pracownik_id_pracownika
-group by year(z.data_zamowienia) order by sum(ilosc*cena) desc
+#Wyświetl wartość przychodu dla każdego roku. Dane posortuj malejąco według sumy wartości zamówień.
+select year(zamowienie.data_zamowienia)as rok,sum(ilosc * cena) as suma from zamowienie
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+group by rok
+order by suma desc;
 ```
 14:
 ```mysql
-select sz.nazwa_statusu_zamowienia, sum(pz.ilosc*pz.cena) as wartosc from pozycja_zamowienia pz
-inner join zamowienie z on z.id_zamowienia=pz.zamowienie
-inner join status_zamowienia sz on sz.id_statusu_zamowienia=z.status_zamowienia
-where id_statusu_zamowienia=6 group by nazwa_statusu_zamowienia
+#Wyświetl sumę wartości wszystkich anulowanych zamówień.
+select sum(ilosc * cena) as suma from pozycja_zamowienia
+inner join zamowienie on id_zamowienia = zamowienie
+inner join status_zamowienia on id_statusu_zamowienia = status_zamowienia
+where nazwa_statusu_zamowienia = 'anulowane'
+group by nazwa_statusu_zamowienia;
 ```
 15:
 ```mysql
-select count(pz.zamowienie) as liczba_zamowien, sum(pz.ilosc*pz.cena) as suma_zamowien, ak.miejscowosc from pozycja_zamowienia pz
-inner join zamowienie z on pz.zamowienie=z.id_zamowienia
-inner join adres_klienta ak on ak.klient=z.klient
+#Wyświetl liczbę zamówień i sumę zamówień dla każdego miasta z podstawowego adresu klientów.
+select  miejscowosc, count(zamowienie), sum(ilosc * cena) from zamowienie
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+inner join klient on id_klienta = zamowienie.klient
+inner join adres_klienta on id_klienta = adres_klienta.klient
 where typ_adresu=1
-group by miejscowosc 
-
+group by miejscowosc;
 ```
 16:
 ```mysql
-select sum(pz.ilosc*pz.cena)-sum(t.cena_zakupu) as dochod from pozycja_zamowienia pz
-inner join zamowienie z on z.id_zamowienia= pz.zamowienie
-inner join towar t on pz.towar=t.id_towaru
-where status_zamowienia = 5
+#Wyświetl dotychczasowy dochód firmy biorąc pod uwagę tylko zamówienia zrealizowane.
+select sum(ilosc * cena) as dotychczasowy_dochód from pozycja_zamowienia
+inner join zamowienie on id_zamowienia = zamowienie
+inner join status_zamowienia on status_zamowienia = status_zamowienia.id_statusu_zamowienia
+where nazwa_statusu_zamowienia = 'zrealizowane'
+group by nazwa_statusu_zamowienia;
 ```
 17:
 ```mysql
-select sum(pz.ilosc*pz.cena)-sum(t.cena_zakupu) as dochod,year(data_zamowienia) as rok from pozycja_zamowienia pz
-inner join zamowienie z on z.id_zamowienia= pz.zamowienie
-inner join towar t on pz.towar=t.id_towaru
-group by rok
+#Wyświetl wartość aktualnego stanu magazynowego z podziałem na kategorię produktów.
+select kategoria.nazwa_kategori,sum(stan_magazynowy.ilosc*towar.cena_zakupu) as wartosc_zakupu_magazynu,sum(stan_magazynowy.ilosc*pozycja_zamowienia.cena) as wartosc_przy_sprzedazy from kategoria
+inner join towar on id_kategori = towar.kategoria
+inner join stan_magazynowy on id_towaru = stan_magazynowy.towar
+inner join pozycja_zamowienia on id_towaru = pozycja_zamowienia.towar
+group by nazwa_kategori;
 ```
 18:
 ```mysql
-select sum(sm.ilosc*pz.cena) as wartosc_stanu, k.nazwa_kategori from stan_magazynowy sm
-inner join towar t on sm.towar=t.id_towaru
-inner join kategoria k on t.kategoria=k.id_kategori
-inner join pozycja_zamowienia pz on pz.towar=t.id_towaru
-group by nazwa_kategori
-
+#Policz i wyświetl dochód (przychód z zamówień i cena zakupu towaru) w każdym roku działalności firmy.
+select year(zamowienie.data_zamowienia)as rok,sum(pozycja_zamowienia.ilosc * cena)as przychod,sum(pozycja_zamowienia.ilosc*towar.cena_zakupu)as cena_zakupu,(sum(pozycja_zamowienia.ilosc * cena))-sum(pozycja_zamowienia.ilosc*towar.cena_zakupu) as dochod from zamowienie
+inner join pozycja_zamowienia on id_zamowienia = pozycja_zamowienia.zamowienie
+inner join towar on id_towaru = pozycja_zamowienia.towar
+group by rok
 ```
 19:
 ```mysql
-select monthname(data_urodzenia) as miesiąc, count(id_pracownika) as Liczba_pracowników from pracownik 
-group by miesiąc order by month(miesiąc) desc
-
+#Przygotuj zapytanie, które wyświetli dane w poniższej postaci (policz ilu pracowników urodziło się w danym miesiącu - uwaga na porządek sortowania).
+select monthname(pracownik.data_urodzenia) as miesiac, count(pracownik.id_pracownika) as liczba_pracownikow from pracownik
+group by miesiac
+order by month(miesiac) desc;
 ```
 20:
 ```mysql
-select imie, nazwisko, sum(pensja) from pracownik
- where  data_zatrudnienia <= CURRENT_DATE group by id_pracownika
-
+#Wyświetl imię i nazwisko pracownika i koszt jaki poniósł pracodawca od momentu jego zatrudnienia.
+select pracownik.imie,pracownik.nazwisko,(TIMESTAMPDIFF(MONTH,data_zatrudnienia,date(now()))* pensja) as koszt from pracownik
+where data_zatrudnienia  <= date(now())
+group by id_pracownika;
 ```
+
+
+
+
+
+
