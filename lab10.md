@@ -105,9 +105,10 @@ group by miejscowosc;
 16:
 ```mysql
 #Wyświetl dotychczasowy dochód firmy biorąc pod uwagę tylko zamówienia zrealizowane.
-select sum(ilosc * cena) as dotychczasowy_dochód from pozycja_zamowienia
-inner join zamowienie on id_zamowienia = zamowienie
-inner join status_zamowienia on status_zamowienia = status_zamowienia.id_statusu_zamowienia
+select sum(pozycja_zamowienia.ilosc*pozycja_zamowienia.cena) as Przychod,sum(pozycja_zamowienia.ilosc*towar.cena_zakupu) as CenaZakupu,sum(pozycja_zamowienia.ilosc*pozycja_zamowienia.cena)-sum(pozycja_zamowienia.ilosc*towar.cena_zakupu) as Dochod from pozycja_zamowienia
+inner join towar on towar = towar.id_towaru
+inner join zamowienie on zamowienie = zamowienie.id_zamowienia
+inner join status_zamowienia on id_statusu_zamowienia = status_zamowienia
 where nazwa_statusu_zamowienia = 'zrealizowane'
 group by nazwa_statusu_zamowienia;
 ```
