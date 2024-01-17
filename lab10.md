@@ -132,7 +132,8 @@ group by rok
 #Przygotuj zapytanie, które wyświetli dane w poniższej postaci (policz ilu pracowników urodziło się w danym miesiącu - uwaga na porządek sortowania).
 select monthname(pracownik.data_urodzenia) as miesiac, count(pracownik.id_pracownika) as liczba_pracownikow from pracownik
 group by miesiac
-order by month(miesiac) desc;
+order by FIELD(miesiac,'January', 'February', 'March', 'April', 'May', 'June', 
+'July','August','September','October','November','December');
 ```
 20:
 ```mysql
