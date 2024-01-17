@@ -15,9 +15,10 @@ group by nazwa
 ```
 4:
 ```mysql
-select nazwa_kategori, group_concat(nazwa_towaru) from kategoria
-inner join towar on id_kategori = kategoria
-group by nazwa_kategori;
+#Wyświetl nazwę kategorii oraz liczbę produktów w każdej z nich.
+select kategoria.nazwa_kategori, count(id_towaru) from kategoria
+inner join towar on kategoria = id_kategori
+group by nazwa_kategori
 ```
 5:
 ```mysql
